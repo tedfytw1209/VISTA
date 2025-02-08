@@ -16,6 +16,7 @@ from functools import partial
 
 import monai
 import numpy as np
+import json
 import torch
 import torch.distributed as dist
 from monai import transforms
@@ -55,6 +56,14 @@ IGNORE_PROMPT = set(
 )  # airway
 EVERYTHING_PROMPT = list(set([i + 1 for i in range(133)]) - IGNORE_PROMPT)
 
+def load_jsonl_file(jsonl_file):
+    try:
+        with open(jsonl_file) as fp:
+            list_data_dict = json.load(fp)
+    except:
+        with open(jsonl_file) as fp:
+            list_data_dict = [json.loads(q) for q in fp]
+    return list_data_dict
 
 def infer_wrapper(inputs, model, **kwargs):
     outputs = model(input_images=inputs, **kwargs)
@@ -321,6 +330,33 @@ class InferClass:
             even_divisible=False,
         )[rank]
         self.infer(infer_files, label_prompt=EVERYTHING_PROMPT, rank=rank)
+        
+    @torch.no_grad()
+    def batch_infer(self, datalist=str, basedir=str, 
+                    point=None,
+                    point_label=None,
+                    label_prompt=None,
+                    prompt_class=None,
+                    save_mask=False,
+                    point_start=0):
+        #json {"training": [dict('image': str, 'label': str)]}
+        #train_files, _ = datafold_read(datalist=datalist, basedir=basedir, fold=0, key="infer")
+        #train_files = [_["image"] for _ in train_files]
+        list_data_dict = load_jsonl_file(datalist)
+        train_files = [os.path.join(basedir,data_dict['nii']) for data_dict in list_data_dict]
+        dist.init_process_group(backend="nccl", init_method="env://")
+        world_size = dist.get_world_size()
+        rank = dist.get_rank()
+        # no need to wrap model with DistributedDataParallel
+        self.model = self.model.to(f"cuda:{rank}")
+        infer_files = partition_dataset(
+            data=train_files,
+            shuffle=False,
+            num_partitions=world_size,
+            even_divisible=False,
+        )[rank]
+        self.infer(infer_files, label_prompt=label_prompt,point=point,point_label=point_label,prompt_class=prompt_class,save_mask=save_mask,point_start=point_start,
+                   rank=rank)
 
 
 if __name__ == "__main__":
