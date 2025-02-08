@@ -343,7 +343,7 @@ class InferClass:
         #train_files, _ = datafold_read(datalist=datalist, basedir=basedir, fold=0, key="infer")
         #train_files = [_["image"] for _ in train_files]
         list_data_dict = load_jsonl_file(datalist)
-        train_files = [os.path.join(basedir,data_dict['nii']) for data_dict in list_data_dict]
+        train_files = [os.path.join(basedir,data_dict['nii']) for data_dict in list_data_dict if os.path.exists(os.path.join(basedir,data_dict['nii']))]
         dist.init_process_group(backend="nccl", init_method="env://")
         world_size = dist.get_world_size()
         rank = dist.get_rank()
@@ -355,8 +355,7 @@ class InferClass:
             num_partitions=world_size,
             even_divisible=False,
         )[rank]
-        self.infer(infer_files, label_prompt=label_prompt,point=point,point_label=point_label,prompt_class=prompt_class,save_mask=save_mask,point_start=point_start,
-                   rank=rank)
+        self.infer(infer_files, label_prompt=label_prompt,point=point,point_label=point_label,prompt_class=prompt_class,save_mask=save_mask,point_start=point_start)
 
 
 if __name__ == "__main__":
