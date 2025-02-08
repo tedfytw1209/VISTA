@@ -349,13 +349,14 @@ class InferClass:
         rank = dist.get_rank()
         # no need to wrap model with DistributedDataParallel
         self.model = self.model.to(f"cuda:{rank}")
-        infer_files = partition_dataset(
+        '''infer_files = partition_dataset(
             data=train_files,
             shuffle=False,
             num_partitions=world_size,
             even_divisible=False,
-        )[rank]
-        self.infer(infer_files, label_prompt=label_prompt,point=point,point_label=point_label,prompt_class=prompt_class,save_mask=save_mask,point_start=point_start)
+        )[rank]'''
+        for infer_file in train_files:
+            self.infer(infer_file, label_prompt=label_prompt,point=point,point_label=point_label,prompt_class=prompt_class,save_mask=save_mask,point_start=point_start)
 
 
 if __name__ == "__main__":
