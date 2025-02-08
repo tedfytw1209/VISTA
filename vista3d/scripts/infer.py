@@ -338,6 +338,7 @@ class InferClass:
                     label_prompt=None,
                     prompt_class=None,
                     save_mask=False,
+                    max_n = -1,
                     point_start=0):
         #json {"training": [dict('image': str, 'label': str)]}
         #train_files, _ = datafold_read(datalist=datalist, basedir=basedir, fold=0, key="infer")
@@ -355,6 +356,8 @@ class InferClass:
             num_partitions=world_size,
             even_divisible=False,
         )[rank]'''
+        if max_n > 0:
+            train_files = train_files[:max_n]
         for infer_file in train_files:
             self.infer(infer_file, label_prompt=label_prompt,point=point,point_label=point_label,prompt_class=prompt_class,save_mask=save_mask,point_start=point_start)
 
