@@ -345,11 +345,11 @@ class InferClass:
         #train_files = [_["image"] for _ in train_files]
         list_data_dict = load_jsonl_file(datalist)
         train_files = [os.path.join(basedir,data_dict['nii']) for data_dict in list_data_dict if os.path.exists(os.path.join(basedir,data_dict['nii']))]
-        dist.init_process_group(backend="nccl", init_method="env://")
-        world_size = dist.get_world_size()
-        rank = dist.get_rank()
+        #dist.init_process_group(backend="nccl", init_method="env://")
+        #world_size = dist.get_world_size()
+        #rank = dist.get_rank()
         # no need to wrap model with DistributedDataParallel
-        self.model = self.model.to(f"cuda:{rank}")
+        #self.model = self.model.to(f"cuda:{rank}")
         '''infer_files = partition_dataset(
             data=train_files,
             shuffle=False,
@@ -359,6 +359,7 @@ class InferClass:
         if max_n > 0:
             train_files = train_files[:max_n]
         for infer_file in train_files:
+            print(f"Processing {infer_file}")
             self.infer(infer_file, label_prompt=label_prompt,point=point,point_label=point_label,prompt_class=prompt_class,save_mask=save_mask,point_start=point_start)
 
 
